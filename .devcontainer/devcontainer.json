@@ -1,0 +1,24 @@
+{
+    "name": "Tensorflow",
+    "build": {
+        "context": ".",
+        "dockerfile": "Dockerfile"
+    },
+    "privileged": true,
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "eamodio.gitlens"
+            ]
+        }
+    },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/root/workspace,type=bind,consistency=delegated",
+    "workspaceFolder": "/home/root/workspace",
+    "runArgs": [
+        "--gpus", "all",
+        "--name", "tensorflow_devcontainer"
+    ]
+}
