@@ -39,10 +39,10 @@ SONGS_DIR = BASE_DIR / 'songs'
 REPLAYS_DIR = BASE_DIR / 'replays'
 
 
-def all_files(limit=0, verbose=False):
+def all_files(osu_folder, limit=0, verbose=False):
     """Return a pandas DataFrame mapping replay files to beatmap files"""
 
-    replays = _list_all_replays()
+    replays = _list_all_replays(osu_folder)
     if limit > 0:
         replays = replays[:limit]
 
@@ -51,7 +51,7 @@ def all_files(limit=0, verbose=False):
         # if verbose:
         #     _print_progress_bar(replays, i, reverse=True)
 
-        beatmap = _get_replay_beatmap_file(replays[i])
+        beatmap = _get_replay_beatmap_file(osu_folder, replays[i])
 
         if beatmap is None:
             if verbose:
@@ -63,7 +63,7 @@ def all_files(limit=0, verbose=False):
                 print(replays[i], 'Valid')
 
     global _beatmap_cache
-    with open('.data/beatmap_cache.dat', 'wb') as f:
+    with open(os.path.join(osu_path, '.data', 'beatmap_cache.dat'), 'wb') as f:
         pickle.dump(_beatmap_cache, f)
 
     if verbose:
@@ -214,10 +214,10 @@ def target_data(dataset, verbose=False):
     return pd.DataFrame(np.reshape(data, (-1, len(OUTPUT_FEATURES))), index=index, columns=OUTPUT_FEATURES, dtype=np.float32)
 
 
-def _list_all_replays():
+def _list_all_replays(osu_folder):
     # Returns the full list of *.osr replays available for a given
     # osu! installation
-    pattern = os.path.join(REPLAYS_DIR, "*.osr")
+    pattern = os.path.join(osu_path, "Replays", "*.osr")
     return glob(pattern)
 
 
@@ -232,7 +232,7 @@ except:
     _beatmap_cache = {}
 
 
-def _get_replay_beatmap_file(replay_file):
+def _get_replay_beatmap_file(osu_folder, replay_file):
     global _beatmap_cache
 
     m = re.search(r"[^\\/]+ \- (.+ \- .+) \[(.+)\] \(.+\)", replay_file)
@@ -244,7 +244,7 @@ def _get_replay_beatmap_file(replay_file):
     if beatmap_file_pattern in _beatmap_cache:
         return _beatmap_cache[beatmap_file_pattern]
 
-    pattern = os.path.join(SONGS_DIR, "**", beatmap_file_pattern)
+    pattern = os.path.join(osu_path, "Songs", "**", beatmap_file_pattern)
     file_matches = glob(pattern)
 
     if len(file_matches) > 0:
