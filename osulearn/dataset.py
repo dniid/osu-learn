@@ -63,7 +63,7 @@ def all_files(osu_folder, limit=0, verbose=False):
                 print(replays[i], 'Valid')
 
     global _beatmap_cache
-    with open(os.path.join(osu_path, '.data', 'beatmap_cache.dat'), 'wb') as f:
+    with open(os.path.join(osu_folder, '.data', 'beatmap_cache.dat'), 'wb') as f:
         pickle.dump(_beatmap_cache, f)
 
     if verbose:
@@ -217,7 +217,7 @@ def target_data(dataset, verbose=False):
 def _list_all_replays(osu_folder):
     # Returns the full list of *.osr replays available for a given
     # osu! installation
-    pattern = os.path.join(osu_path, "Replays", "*.osr")
+    pattern = os.path.join(osu_folder, "Replays", "*.osr")
     return glob(pattern)
 
 
@@ -244,7 +244,7 @@ def _get_replay_beatmap_file(osu_folder, replay_file):
     if beatmap_file_pattern in _beatmap_cache:
         return _beatmap_cache[beatmap_file_pattern]
 
-    pattern = os.path.join(osu_path, "Songs", "**", beatmap_file_pattern)
+    pattern = os.path.join(osu_folder, "Songs", "**", beatmap_file_pattern)
     file_matches = glob(pattern)
 
     if len(file_matches) > 0:
