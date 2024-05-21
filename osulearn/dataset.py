@@ -8,7 +8,9 @@ import numpy as np
 import pandas as pd
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from osrparse import Replay, Mod
+from osrparse.utils import ReplayEventOsu, Key
 
+from osu.rulesets._util.bsearch import bsearch
 from osu.rulesets import (
     beatmap as osu_beatmap,
     core as osu_core,
@@ -84,8 +86,8 @@ def load(files, verbose=0):
 
         try:
             replay = Replay.from_path(row['replay'])
-            assert not replay.has_mods(Mod.DT, Mod.HR),\
-                    "DT and HR are not supported yet"
+            # assert not replay.has_mods(Mod.DT, Mod.HR),\
+            #         "DT and HR are not supported yet"
             beatmap = osu_beatmap.load(row['beatmap'])
 
         except Exception as e:
@@ -108,7 +110,7 @@ def input_data(dataset, verbose=False):
     _memo = {}
 
     if isinstance(dataset, osu_beatmap.Beatmap):
-        dataset = pd.DataFrame([dataset], columns=['beatmap'])
+        dataset = pd.DataFrame.from_records([dataset], columns=['beatmap'])
 
     beatmaps = dataset['beatmap']
 
@@ -163,8 +165,7 @@ def input_data(dataset, verbose=False):
         print()
         print()
 
-    data = pad_sequences(np.array(data), maxlen=BATCH_LENGTH,
-                            dtype='float', padding='post', value=0)
+    data = pad_sequences(np.array(data, dtype='object'), maxlen=BATCH_LENGTH, dtype='float', padding='post', value=0)
 
     index = pd.MultiIndex.from_product([
         range(len(data)), range(BATCH_LENGTH)
@@ -208,7 +209,7 @@ def target_data(dataset, verbose=False):
         print()
         print()
 
-    data = pad_sequences(np.array(target_data), maxlen=BATCH_LENGTH, dtype='float', padding='post', value=0)
+    data = pad_sequences(np.array(target_data, dtype='object'), maxlen=BATCH_LENGTH, dtype='float', padding='post', value=0)
     index = pd.MultiIndex.from_product([range(len(data)), range(BATCH_LENGTH)], names=['chunk', 'frame'])
     return pd.DataFrame(np.reshape(data, (-1, len(OUTPUT_FEATURES))), index=index, columns=OUTPUT_FEATURES, dtype=np.float32)
 
@@ -274,7 +275,20 @@ def _beatmap_frame(beatmap, time):
 
 
 def _replay_frame(beatmap, replay, time):
-    x, y, _ = replay.frame(time)
-    x = max(0, min(x / osu_core.SCREEN_WIDTH, 1))
-    y = max(0, min(y / osu_core.SCREEN_HEIGHT, 1))
+    def get_replay_frame(replay, time):
+        index = bsearch(replay.replay_data, time, lambda f: f.time_delta)
+        offset = replay.replay_data[index].time_delta
+        if offset > time:
+            if index > 0:
+                return replay.replay_data[index - 1]
+            else:
+                return ReplayEventOsu(time_delta=0, x=0, y=0, keys=Key(0))
+        elif index >= len(replay.replay_data):
+            index = -1
+
+        return replay.replay_data[index]
+
+    time_frame = get_replay_frame(replay, time)
+    x = max(0, min(time_frame.x / osu_core.SCREEN_WIDTH, 1))
+    y = max(0, min(time_frame.y / osu_core.SCREEN_HEIGHT, 1))
     return x, y
