@@ -6,8 +6,7 @@ import numpy as np
 import pygame
 import mutagen.mp3
 
-from osu.rulesets import beatmap as _beatmap, hitobjects as _hitobjects, \
-						replay as _replay
+from osu.rulesets import beatmap as _beatmap, hitobjects as _hitobjects
 from osu.rulesets.core import SCREEN_HEIGHT, SCREEN_WIDTH
 from osulearn import dataset
 
@@ -49,7 +48,8 @@ assert not (m is None), "Invalid replay file"
 beatmap_pattern = "*{}*{}*{}*.osu".format(m[1], m[2], m[3])
 
 # osu! Beatmap directory
-BEATMAPS_FOLDER = os.path.join(os.getenv('LocalAppData'), "osu!", "Songs")
+BASE_DIR = '/home/root/'
+BEATMAPS_FOLDER = BASE_DIR + 'songs'
 
 # Find beatmap
 beatmap_glob = glob(os.path.join(BEATMAPS_FOLDER, "**", beatmap_pattern))
